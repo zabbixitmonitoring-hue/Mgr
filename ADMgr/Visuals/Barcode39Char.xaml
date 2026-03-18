@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="ADMgr.Barcode39Char"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Background="White">
+        <TextBlock x:Name="tbChar" FontFamily="Arial" DockPanel.Dock="Bottom" TextAlignment="Center" Background="White" />
+        <StackPanel Orientation="Horizontal" Height="64">
+            <Rectangle x:Name="bar1" Fill="Black" />
+            <Rectangle x:Name="bar2" Fill="White" />
+            <Rectangle x:Name="bar3" Fill="Black" />
+            <Rectangle x:Name="bar4" Fill="White" />
+            <Rectangle x:Name="bar5" Fill="Black" />
+            <Rectangle x:Name="bar6" Fill="White" />
+            <Rectangle x:Name="bar7" Fill="Black" />
+            <Rectangle x:Name="bar8" Fill="White" />
+            <Rectangle x:Name="bar9" Fill="Black" />
+            <Rectangle x:Name="bar10" Fill="White" />
+            <!--GeometryDrawing x:Name="bar1" Geometry="M 0,0 L 0,1 Z" Brush="Black" />
+            <GeometryDrawing x:Name="bar2" Geometry="M 0,0 L 0,1 Z" Brush="White" />
+            <GeometryDrawing x:Name="bar3" Geometry="M 0,0 L 0,1 Z" Brush="Black" />
+            <GeometryDrawing x:Name="bar4" Geometry="M 0,0 L 0,1 Z" Brush="White" />
+            <GeometryDrawing x:Name="bar5" Geometry="M 0,0 L 0,1 Z" Brush="Black" />
+            <GeometryDrawing x:Name="bar6" Geometry="M 0,0 L 0,1 Z" Brush="White" />
+            <GeometryDrawing x:Name="bar7" Geometry="M 0,0 L 0,1 Z" Brush="Black" />
+            <GeometryDrawing x:Name="bar8" Geometry="M 0,0 L 0,1 Z" Brush="White" />
+            <GeometryDrawing x:Name="bar9" Geometry="M 0,0 L 0,1 Z" Brush="Black" /-->
+        </StackPanel>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,1203 @@
+﻿<Window x:Class="ADMgr.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+        xmlns:classes="clr-namespace:ADMgr.Classes"
+        xmlns:this="clr-namespace:ADMgr"
+        xmlns:lvSort="clr-namespace:ADMgr.ListViewColumnSort"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        Height="868" Width="1024"
+        WindowStartupLocation="CenterScreen" 
+        WindowState="Maximized"
+                ResizeMode="NoResize"
+        ShowInTaskbar="True"        
+        Style="{StaticResource VS2012WindowStyle}"
+        Loaded="Window_Loaded" Icon="/organization.ico">
+    
+    <Window.Resources>
+        <Style x:Key="HyperlinkButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <TextBlock x:Name="tbContent" Text="{TemplateBinding Content}" 
+                                   Cursor="/Image_utils\NB_link.cur"  
+                                   TextDecorations="Underline" 
+                                   Foreground="{DynamicResource ControlForeground}" >
+                        </TextBlock>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tbContent" 
+                                        Property="Foreground"
+                                        Value="{StaticResource Red}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DetailsViewListBox" TargetType="{x:Type ListBox}">
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type ListBoxItem}">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="128" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1" Padding="4">
+                                <TextBlock Text="{Binding Path=Key}" FontWeight="Bold" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource ControlForeground}"/>
+                            </Border>
+                            <Border Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1">
+                                <TextBox Text="{Binding Path=Value, Mode=OneWay}" IsReadOnly="True" IsReadOnlyCaretVisible="False" TextWrapping="Wrap" />
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="4">
+
+        <ListView x:Name="lvProperties" DockPanel.Dock="Right" DataContext="{Binding}" Margin="4" Visibility="Collapsed">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Свойство объекта" DisplayMemberBinding="{Binding Path=PropertyName}" Width="120" />
+                    <GridViewColumn Header="Значение" Width="256">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding Path=Value}" IsReadOnly="True" IsReadOnlyCaretVisible="False" Width="240" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Button x:Name="bnToggleProperties"
+                DockPanel.Dock="Right" 
+                Content="&lt;" 
+                ToolTip="Отобразить дополнительные свойства объектов" 
+                Height="128" 
+                VerticalAlignment="Center" 
+                Margin="2,336.5,2,337.5"
+                Click="bnToggleProperties_Click" Width="28" 
+                Style="{DynamicResource ButtonStyleDopParametr}" Visibility="Collapsed"/>
+
+        <TabControl Margin="4">
+            <TabItem Header="Active Directory">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="356" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <GroupBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="1" Header="Поиск" Margin="4" Height="72" Width="347">
+                            <DockPanel>
+                                <Button x:Name="bnClearSearchAll" DockPanel.Dock="Right" Content="×" ToolTip="Очистить поле поиска" Margin="4" Width="28"
+                                        Click="bnClearSearchAll_Click" Visibility="Collapsed"/>
+                                <Button x:Name="bnSearchAll" DockPanel.Dock="Right" Content=">>" Margin="4" Width="28"
+                                        Click="bnSearchAll_Click"  Visibility="Collapsed"/>
+                                <TextBox x:Name="tbSearchAll" Margin="8" TabIndex="0"
+                                         KeyDown="tbSearchAll_KeyDown" Height="Auto"
+                                         ToolTip="Поиск по фамилии, Поиск по табельному №, Поиск по имени ПК, Поиск по телефону (-), ENTER - Поиск, ESC - Очистить результаты поиска" />
+                            </DockPanel>
+                        </GroupBox>
+                        <this:Loading x:Name="FindLoading" DockPanel.Dock="Right" Visibility="Collapsed" ToolTip="..." Grid.Row="0" Grid.Column="1" HorizontalAlignment="left" Margin="8 0 0 0"/>
+                    </Grid>
+
+                    <DockPanel DockPanel.Dock="Bottom" LastChildFill="False" Margin="4">
+                        
+                        <Button x:Name="bnClose" DockPanel.Dock="Right" Content="Закрыть" Width="80" Margin="4,0"
+                                Click="bnClose_Click" Height="30" />                        
+                    </DockPanel>
+
+                    <TreeView x:Name="tvUsers"  DataContext="{Binding}" Margin="1"
+                              SelectedItemChanged="tvUsers_SelectedItemChanged" Width="350" Background="{x:Null}"
+                              VirtualizingStackPanel.IsVirtualizing="True"
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.CanContentScroll="True">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </TreeView.ItemsPanel>
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type this:TreeNodeViewModel}" ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </HierarchicalDataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+
+
+                    <DockPanel Name="dpFull" Grid.Row="0" Grid.Column="1">
+                        <DockPanel Margin="8" Width="196" VerticalAlignment="Top">
+                            <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                                <Button x:Name="bnPingWorkstation" Content="Ping" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnPingWorkstation_Click" />
+                                <Button x:Name="bnInstallRAdmin" Content="Установить RAdmin" Margin="8,2" Width="160"  Height="26" Visibility="Collapsed"
+                                        Click="bnInstallRAdmin_Click" />
+                                <Button x:Name="bnTurnOnRAdmin" Content="Включить службу RAdmin" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnTurnOnRAdmin_Click" />
+                                <Button x:Name="bnConnectViaRAdmin" Content="RA Управление" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnConnectViaRAdmin_Click" />
+                                <Button x:Name="bnConnectViewRAdmin" Content="RA Просмотр" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnConnectViewRAdmin_Click" />
+                                <Button x:Name="bnConnectFileRAdmin" Content="RA Файл" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnConnectFileRAdmin_Click" />
+                                <Button x:Name="bnConnectViaRDP" Content="RDP" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnConnectViaRDP_Click" />
+                                <Button x:Name="bnCompMgmt" Content="Управление" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"
+                                        Click="bnCompMgmt_Click" />
+                                <Button Content="Установить ПО" Margin="8,2" Width="160" Height="26" Visibility="Collapsed"/>
+                            </StackPanel>
+
+                            <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                                <this:Loading x:Name="stLoading" DockPanel.Dock="Right" Visibility="Collapsed" ToolTip="Проверка соединения..." />
+                                <this:Succeeded x:Name="stSucceeded" DockPanel.Dock="Right" Visibility="Collapsed" ToolTip="В сети" Style="{DynamicResource SucceededStyleSucceeded}" />
+                                <this:Failed x:Name="stFailed" DockPanel.Dock="Right" Visibility="Collapsed" ToolTip="Не в сети" Style="{DynamicResource FailedStyleFailed}" />
+                                
+                                <TextBlock x:Name="tbWorkstation" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" FontWeight="Bold" />
+                            </DockPanel>
+                            <TextBlock x:Name="tbIP" DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold"/>
+                            <TextBlock x:Name="tbdrink"  DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold"/>
+                            <TextBlock x:Name="tbmobile"  DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold"/>
+                            <TextBlock x:Name="tbPhone"  DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold"/>
+                            <TextBlock x:Name="tbID" DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold" />
+                            <TextBlock x:Name="tbFullName" DockPanel.Dock="Bottom" TextAlignment="Center" TextWrapping="WrapWithOverflow" FontWeight="Bold" Margin="0,8,0,0"/>
+                            <Border x:Name="UserPhotoBorder" Width="196" Height="196" CornerRadius="48" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed" Background="Transparent">
+                                <Grid>
+                                    <!-- keep a hidden Image element so code-behind can set its Source -->
+                                    <Image x:Name="imPhoto" Visibility="Collapsed" Stretch="Uniform"/>
+
+                                    <!-- Rounded rectangle filled with the image via ImageBrush to get proper rounded corners -->
+                                    <Rectangle Height="196" RadiusX="98" RadiusY="98" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Stroke="#FF4A90E2" StrokeThickness="2">
+                                        <Rectangle.Fill>
+                                            <ImageBrush ImageSource="{Binding ElementName=imPhoto, Path=Source}" Stretch="UniformToFill" />
+                                        </Rectangle.Fill>
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="#66000000" BlurRadius="8" ShadowDepth="2" Opacity="0.8" />
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+                                </Grid>
+                            </Border>
+                        </DockPanel>
+
+                        <TabControl x:Name="tcOveralData" Margin="8">
+                            <TabItem x:Name="tiUser" Header="Пользователь" >
+                                <ScrollViewer Margin="8">
+                                    <Grid VerticalAlignment="Top">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="128" />
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Grid.Row="0" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,0,0" Padding="4" CornerRadius="8,0,0,0">
+                                            <TextBlock Text="Подразделение" FontWeight="Bold" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Grid.Column="0" Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,0,0" Padding="4">
+                                            <TextBlock Text="Должность" FontWeight="Bold" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Grid.Column="0" Grid.Row="2" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,0,0" Padding="4">
+                                            <TextBlock Text="Расположение" FontWeight="Bold" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Grid.Column="0" Grid.Row="3" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,0,0" Padding="4">
+                                            <TextBlock Text="Подразделение AD" FontWeight="Bold" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Grid.Column="0" Grid.Row="4" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,0,1" Padding="4" CornerRadius="0,0,0,8">
+                                            <TextBlock Text="Группы AD" FontWeight="Bold" TextWrapping="WrapWithOverflow" VerticalAlignment="Center" />
+                                        </Border>
+
+
+                                        <Border Grid.Column="1" Grid.Row="0" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,1,0" Padding="4" CornerRadius="0,8,0,0">
+                                            <TextBlock x:Name="tbDepartment" TextWrapping="WrapWithOverflow" />
+                                        </Border>
+                                        <Border Grid.Column="1" Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,1,0" Padding="4">
+                                            <TextBlock x:Name="tbPost" TextWrapping="WrapWithOverflow" />
+                                        </Border>
+                                        <Border Grid.Column="1" Grid.Row="2" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,1,0" Padding="4">
+                                            <TextBlock x:Name="tbAddress" TextWrapping="WrapWithOverflow" />
+                                        </Border>
+                                        <Border Grid.Column="1" Grid.Row="3" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1,1,1,0" Padding="4">
+                                            <TextBlock x:Name="tbADPath" TextWrapping="WrapWithOverflow" />
+                                        </Border>
+                                        <Border Grid.Column="1" Grid.Row="4" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" BorderThickness="1" Padding="4" CornerRadius="0,0,8,0">
+                                            <ItemsControl x:Name="icADGroups" />
+                                        </Border>
+                                    </Grid>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <TabItem x:Name="tiSystemInfo" Header="Система">
+                                <ListBox x:Name="lbSystemDetails" ItemsSource="{Binding}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                            </TabItem>
+
+                            <TabItem x:Name="tiHardwareInfo" Header="Конфигурация">
+                                <TabControl Margin="8">
+                                    <TabItem x:Name="tiMotherboard" Header="Материнская плата">
+                                        <ListBox x:Name="lbMotherboard" ItemsSource="{Binding}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                    </TabItem>
+                                    <TabItem x:Name="tiVideoCard" Header="Видеокарта">
+                                        <TabControl x:Name="tcVideoCard" DockPanel.Dock="Top" ItemsSource="{Binding}">
+                                            <TabControl.ItemContainerStyle>
+                                                <Style TargetType="{x:Type TabItem}">
+                                                    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                                                    <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                                                    <Setter Property="Padding" Value="1"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="MinWidth" Value="10" />
+                                                    <Setter Property="MinHeight" Value="28" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="{x:Type TabItem}">
+                                                                <ControlTemplate.Resources>
+                                                                    <Storyboard x:Key="HoverOn">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForeground}"/>
+                                                                    </Storyboard>
+                                                                    <Storyboard x:Key="HoverOff">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForegroundWhite}"/>
+                                                                    </Storyboard>
+                                                                </ControlTemplate.Resources>
+                                                                <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                                                    <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                                                        <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                              HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+                                                                        </ContentPresenter>
+                                                                    </Border>
+                                                                    <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                                                                </Grid>
+                                                                <ControlTemplate.Triggers>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsMouseOver" Value="True"/>
+                                                                            <Condition Property="IsSelected" Value="False"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <MultiTrigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </MultiTrigger.EnterActions>
+                                                                        <MultiTrigger.ExitActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                                                        </MultiTrigger.ExitActions>
+                                                                    </MultiTrigger>
+                                                                    <Trigger Property="IsSelected" Value="True">
+                                                                        <Trigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </Trigger.EnterActions>
+                                                                        <Setter Property="Panel.ZIndex" Value="1"/>
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                                                        <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsEnabled" Value="False">
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                                                        <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Left">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="-90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter Property="Margin" Value="2,0,-2,0"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Right">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Bottom">
+                                                                        <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                                                    </Trigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Top"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Left"/>
+                                                                        </MultiTrigger.Conditions>
+
+                                                                        <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Right"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                                                    </MultiTrigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="HeaderTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Path=name}"  />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="ContentTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <ListBox ItemsSource="{Binding Path=properties}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </TabControl.ItemContainerStyle>
+                                        </TabControl>
+                                    </TabItem>
+                                    <TabItem x:Name="tiCPU" Header="Процессор">
+                                        <ListBox x:Name="lbCPU" ItemsSource="{Binding}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                    </TabItem>
+                                    <TabItem x:Name="tiSoundCard" Header="Звук">
+                                        <ListBox x:Name="lbSoundCard" ItemsSource="{Binding}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                    </TabItem>
+                                    <TabItem x:Name="tiRAM" Header="Оперативная память">
+                                        <TabControl x:Name="tcRAM" DockPanel.Dock="Top" ItemsSource="{Binding}">
+                                            <TabControl.ItemContainerStyle>
+                                                <Style TargetType="{x:Type TabItem}">
+                                                    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                                                    <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                                                    <Setter Property="Padding" Value="1"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="MinWidth" Value="10" />
+                                                    <Setter Property="MinHeight" Value="28" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="{x:Type TabItem}">
+                                                                <ControlTemplate.Resources>
+                                                                    <Storyboard x:Key="HoverOn">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForeground}"/>
+                                                                    </Storyboard>
+                                                                    <Storyboard x:Key="HoverOff">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForegroundWhite}"/>
+                                                                    </Storyboard>
+                                                                </ControlTemplate.Resources>
+                                                                <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                                                    <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                                                        <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                              HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+                                                                        </ContentPresenter>
+                                                                    </Border>
+                                                                    <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                                                                </Grid>
+                                                                <ControlTemplate.Triggers>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsMouseOver" Value="True"/>
+                                                                            <Condition Property="IsSelected" Value="False"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <MultiTrigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </MultiTrigger.EnterActions>
+                                                                        <MultiTrigger.ExitActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                                                        </MultiTrigger.ExitActions>
+                                                                    </MultiTrigger>
+                                                                    <Trigger Property="IsSelected" Value="True">
+                                                                        <Trigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </Trigger.EnterActions>
+                                                                        <Setter Property="Panel.ZIndex" Value="1"/>
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                                                        <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsEnabled" Value="False">
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                                                        <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Left">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="-90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter Property="Margin" Value="2,0,-2,0"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Right">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Bottom">
+                                                                        <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                                                    </Trigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Top"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Left"/>
+                                                                        </MultiTrigger.Conditions>
+
+                                                                        <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Right"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                                                    </MultiTrigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="HeaderTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Path=name}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="ContentTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <ListBox ItemsSource="{Binding Path=properties}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </TabControl.ItemContainerStyle>
+                                        </TabControl>
+                                    </TabItem>
+                                    <TabItem x:Name="tiHDD" Header="Жёсткий диск">
+                                        <TabControl x:Name="tcHDD" DockPanel.Dock="Top" ItemsSource="{Binding}">
+                                            <TabControl.ItemContainerStyle>
+                                                <Style TargetType="{x:Type TabItem}">
+                                                    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                                                    <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                                                    <Setter Property="Padding" Value="1"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="MinWidth" Value="10" />
+                                                    <Setter Property="MinHeight" Value="28" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="{x:Type TabItem}">
+                                                                <ControlTemplate.Resources>
+                                                                    <Storyboard x:Key="HoverOn">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForeground}"/>
+                                                                    </Storyboard>
+                                                                    <Storyboard x:Key="HoverOff">
+                                                                        <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForegroundWhite}"/>
+                                                                    </Storyboard>
+                                                                </ControlTemplate.Resources>
+                                                                <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                                                    <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                                                        <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                              HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+                                                                        </ContentPresenter>
+                                                                    </Border>
+                                                                    <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                                                                </Grid>
+                                                                <ControlTemplate.Triggers>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsMouseOver" Value="True"/>
+                                                                            <Condition Property="IsSelected" Value="False"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <MultiTrigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </MultiTrigger.EnterActions>
+                                                                        <MultiTrigger.ExitActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                                                        </MultiTrigger.ExitActions>
+                                                                    </MultiTrigger>
+                                                                    <Trigger Property="IsSelected" Value="True">
+                                                                        <Trigger.EnterActions>
+                                                                            <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                        </Trigger.EnterActions>
+                                                                        <Setter Property="Panel.ZIndex" Value="1"/>
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                                                        <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsEnabled" Value="False">
+                                                                        <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                                                        <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Left">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="-90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter Property="Margin" Value="2,0,-2,0"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Right">
+                                                                        <Setter Property="LayoutTransform">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="90"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Trigger>
+                                                                    <Trigger Property="TabStripPlacement" Value="Bottom">
+                                                                        <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                                                    </Trigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Top"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Left"/>
+                                                                        </MultiTrigger.Conditions>
+
+                                                                        <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                                                    </MultiTrigger>
+                                                                    <MultiTrigger>
+                                                                        <MultiTrigger.Conditions>
+                                                                            <Condition Property="IsSelected" Value="True"/>
+                                                                            <Condition Property="TabStripPlacement" Value="Right"/>
+                                                                        </MultiTrigger.Conditions>
+                                                                        <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                                                        <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                                                    </MultiTrigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="HeaderTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Path=name}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="ContentTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <ListBox ItemsSource="{Binding Path=properties}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </TabControl.ItemContainerStyle>
+                                        </TabControl>
+                                    </TabItem>
+                                    <TabItem x:Name="tiCDROM" Header="CD-привод">
+                                        <ListBox x:Name="lbCDROM" ItemsSource="{Binding}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                    </TabItem>
+                                </TabControl>
+                            </TabItem>
+
+                            <TabItem x:Name="tiVolumes" Header="Диски">
+                                <DockPanel Margin="8">
+                                    <TabControl x:Name="tcVolumes" DockPanel.Dock="Top" SelectedValuePath="letter" ItemsSource="{Binding}"
+                                                SelectionChanged="tcVolumes_SelectionChanged" >
+                                        <TabControl.ItemContainerStyle>
+                                            <Style TargetType="{x:Type TabItem}">
+                                                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                                                <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                                                <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                                                <Setter Property="Padding" Value="1"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                                <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="MinWidth" Value="10" />
+                                                <Setter Property="MinHeight" Value="28" />
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type TabItem}">
+                                                            <ControlTemplate.Resources>
+                                                                <Storyboard x:Key="HoverOn">
+                                                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForeground}"/>
+                                                                </Storyboard>
+                                                                <Storyboard x:Key="HoverOff">
+                                                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForegroundWhite}"/>
+                                                                </Storyboard>
+                                                            </ControlTemplate.Resources>
+                                                            <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                                                <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                                                    <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                              HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+                                                                    </ContentPresenter>
+                                                                </Border>
+                                                                <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                                                            </Grid>
+                                                            <ControlTemplate.Triggers>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="IsSelected" Value="False"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <MultiTrigger.EnterActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                    </MultiTrigger.EnterActions>
+                                                                    <MultiTrigger.ExitActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                                                    </MultiTrigger.ExitActions>
+                                                                </MultiTrigger>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Trigger.EnterActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                    </Trigger.EnterActions>
+                                                                    <Setter Property="Panel.ZIndex" Value="1"/>
+                                                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                                                    <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                                                    <Setter Property="Foreground">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Left">
+                                                                    <Setter Property="LayoutTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="-90"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Setter Property="Margin" Value="2,0,-2,0"/>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Right">
+                                                                    <Setter Property="LayoutTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="90"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Bottom">
+                                                                    <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Top"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Left"/>
+                                                                    </MultiTrigger.Conditions>
+
+                                                                    <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Right"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                                                </MultiTrigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="HeaderTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                                <TextBlock Text="{Binding Path=letter, StringFormat={}{0}:}" />
+                                                                <TextBlock Text="{Binding Path=label, StringFormat={} ({0})}" FontStyle="Italic" />
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="ContentTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <Border Margin="6" Padding="4" BorderBrush="DodgerBlue" BorderThickness="1" CornerRadius="12" >
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                                    <StackPanel Margin="4" VerticalAlignment="Center">
+                                                                        <TextBlock Margin="0,0,0,4" FontSize="16" FontWeight="Bold" Text="{Binding DriveLetter}" />
+                                                                        <TextBlock Margin="2,0,0,4" FontSize="14" FontWeight="Bold" Text="{Binding DriveName}" TextWrapping="Wrap" />
+                                                                    </StackPanel>
+
+                                                                    <lvc:PieChart Width="140" Height="140" HorizontalAlignment="Center" DataTooltip="{x:Null}" Hoverable="False" InnerRadius="20" Series="{Binding ChartSeries}">
+                                                                        <lvc:PieChart.ChartLegend>
+                                                                            <lvc:DefaultLegend Visibility="Collapsed" />
+                                                                        </lvc:PieChart.ChartLegend>
+                                                                    </lvc:PieChart>
+
+                                                                    <StackPanel Margin="8" VerticalAlignment="Center">
+                                                                        <TextBlock Margin="0,2" HorizontalAlignment="Right" Text="{Binding TotalSizeGB, StringFormat='Общий: {0} GB'}" />
+                                                                        <TextBlock Margin="0,2" HorizontalAlignment="Right" Text="{Binding UsedSpaceGB, StringFormat='Занято: {0} GB'}" />
+                                                                        <TextBlock Margin="0,2" HorizontalAlignment="Right" Text="{Binding FreeSpaceGB, StringFormat='Свободно: {0} GB'}" />
+                                                                        <TextBlock Margin="0,2" HorizontalAlignment="Right" Foreground="{Binding StatusColor}" Text="{Binding UsedPercentage, StringFormat='Использовано: {0:F1}%'}" />
+                                                                        <TextBlock Margin="0,2" HorizontalAlignment="Right" Text="{Binding FileSystem}" />
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </TabControl.ItemContainerStyle>
+                                    </TabControl>
+                                    <Grid DockPanel.Dock="Bottom">
+                                        <DockPanel x:Name="dpFileCopyProgress" Visibility="Collapsed">
+                                            <TextBlock x:Name="tbCopyingFileName" DockPanel.Dock="Top" FontWeight="Bold" Margin="8,2"/>
+                                            <Button x:Name="bnAbortFileCopying" DockPanel.Dock="Right" Content="Прервать" Margin="2,2,8,8"
+                                                    Click="bnAbortFileCopying_Click" Style="{DynamicResource ButtonStylePrervat}" />
+                                            <ProgressBar x:Name="pbFileCopying" Minimum="0" Maximum="100" Value="0" Margin="8,2,2,8" Height="20" />
+                                        </DockPanel>
+                                        <Button x:Name="bnUploadFile" Content="Загрузить файл на удаленный ПК" Margin="8"
+                                                Click="bnUploadFile_Click" HorizontalAlignment="Center" VerticalAlignment="Center"  />
+                                    </Grid>
+                                    <Button x:Name="bnOpenInExplorer" DockPanel.Dock="Bottom" Content="Открыть папку в проводнике" Margin="8,8,8,8"
+                                            Click="bnOpenInExplorer_Click" HorizontalAlignment="Center" VerticalAlignment="Center"  />
+                                    <ListBox x:Name="lbFiles" ItemsSource="{Binding}" Margin="0,2"
+                                             MouseDoubleClick="lbFiles_MouseDoubleClick" Background="{x:Null}" />
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem x:Name="tiProcesses" Header="Процессы">
+                                <DockPanel Margin="8">
+                                    <Button x:Name="bnRefreshProcesses" DockPanel.Dock="Bottom" Content="Обновить" Margin="4"
+                                            Click="bnRefreshProcesses_Click"  Width="84" />
+
+                                    <ListView x:Name="lvProcesses" ItemsSource="{Binding}" lvSort:GridViewSort.AutoSort="True" Background="{x:Null}">
+                                        <ListView.View>
+                                            <GridView>
+                                                <GridViewColumn Header="ID" DisplayMemberBinding="{Binding Path=id}"
+                                                            lvSort:GridViewSort.PropertyName="id" Width="64" />
+                                                <GridViewColumn Header="Название" DisplayMemberBinding="{Binding Path=caption}"
+                                                            lvSort:GridViewSort.PropertyName="caption" Width="196" />
+                                                <GridViewColumn Header="Дата запуска" DisplayMemberBinding="{Binding Path=creationDate}"
+                                                            lvSort:GridViewSort.PropertyName="creationDate" Width="128" />
+                                                <GridViewColumn Header="Исполняемый файл" DisplayMemberBinding="{Binding Path=executablePath}"
+                                                            lvSort:GridViewSort.PropertyName="executablePath" Width="256" />
+                                                <GridViewColumn Header="Командная строка" DisplayMemberBinding="{Binding Path=commandLine}"
+                                                            lvSort:GridViewSort.PropertyName="commandLine" Width="256" />
+                                                <GridViewColumn>
+                                                    <GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button x:Name="bnProcessKill" Content="×" FontSize="12" Width="24" Height="24" Padding="0" Tag="{Binding Path=id}"
+                                                                    Click="bnProcessKill_Click" />
+                                                        </DataTemplate>
+                                                    </GridViewColumn.CellTemplate>
+                                                </GridViewColumn>
+                                            </GridView>
+                                        </ListView.View>
+                                    </ListView>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem x:Name="tiPrgTasksInstall" Header="Задачи">
+                                <DockPanel Margin="8">
+                                    <Button x:Name="bnRefreshPrgTasks" DockPanel.Dock="Bottom" Content="Обновить" Margin="10,4,4,4"
+                                            Click="bnRefreshPrgTasks_Click"  Width="84" />
+
+                                    <ListBox x:Name="lbPrgTasks" ItemsSource="{Binding}" Background="{x:Null}">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                                <Setter Property="Margin" Value="4" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="brBackground" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" Padding="4" CornerRadius="8">
+                                                    <DockPanel ToolTip="{Binding Path=prgTask.installPath}">
+                                                        <Button x:Name="bnUninstall" DockPanel.Dock="Right" Content="Удалить" Margin="4,0" Style="{StaticResource ResourceKey=HyperlinkButtonStyle}"
+                                                                Tag="{Binding}" Click="bnUninstallPrgTask_Click" />
+                                                        <Button x:Name="bnInstall" DockPanel.Dock="Right" Content="Установить" Margin="4,0" Style="{StaticResource ResourceKey=HyperlinkButtonStyle}"
+                                                                Tag="{Binding}" Click="bnInstallPrgTask_Click" />
+                                                        <TextBlock Text="{Binding Path=prgTask.taskName}" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0" />
+                                                    </DockPanel>
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=isInstalled}" Value="True">
+                                                        <Setter TargetName="brBackground" Property="Background" Value="{StaticResource LineBackground}"  />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem Header="Установленное ПО">
+                                <DockPanel Margin="8">
+                                    <Button  DockPanel.Dock="Bottom" 
+                                             Content="Обновить" 
+                                             Margin="10,4,4,4"
+                                              Width="84" />
+
+                                    <ListBox ItemsSource="{Binding}" Background="{x:Null}">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                                <Setter Property="Margin" Value="4" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+
+                                    </ListBox>
+                                </DockPanel>
+                            </TabItem>
+
+
+                            <TabItem x:Name="tiPrinters" Header="Принтеры">
+                                <DockPanel Margin="8">
+                                    <TabControl x:Name="tcPrinters" DockPanel.Dock="Top" SelectedValuePath="letter" ItemsSource="{Binding}">
+                                        <TabControl.ItemContainerStyle>
+                                            <Style TargetType="{x:Type TabItem}">
+                                                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                                                <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                                                <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                                                <Setter Property="Padding" Value="1"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                                <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="MinWidth" Value="10" />
+                                                <Setter Property="MinHeight" Value="28" />
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type TabItem}">
+                                                            <ControlTemplate.Resources>
+                                                                <Storyboard x:Key="HoverOn">
+                                                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForeground}"/>
+                                                                </Storyboard>
+                                                                <Storyboard x:Key="HoverOff">
+                                                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                            To="{StaticResource ColorForegroundWhite}"/>
+                                                                </Storyboard>
+                                                            </ControlTemplate.Resources>
+                                                            <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                                                <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                                                    <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                              HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                              ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+
+                                                                    </ContentPresenter>
+                                                                </Border>
+                                                                <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                                                            </Grid>
+                                                            <ControlTemplate.Triggers>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="IsSelected" Value="False"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <MultiTrigger.EnterActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                    </MultiTrigger.EnterActions>
+                                                                    <MultiTrigger.ExitActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                                                    </MultiTrigger.ExitActions>
+                                                                </MultiTrigger>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Trigger.EnterActions>
+                                                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                                                    </Trigger.EnterActions>
+                                                                    <Setter Property="Panel.ZIndex" Value="1"/>
+                                                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                                                    <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                                                    <Setter Property="Foreground">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Left">
+                                                                    <Setter Property="LayoutTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="-90"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Setter Property="Margin" Value="2,0,-2,0"/>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Right">
+                                                                    <Setter Property="LayoutTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="90"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <Trigger Property="TabStripPlacement" Value="Bottom">
+                                                                    <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Top"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Left"/>
+                                                                    </MultiTrigger.Conditions>
+
+                                                                    <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                                                </MultiTrigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsSelected" Value="True"/>
+                                                                        <Condition Property="TabStripPlacement" Value="Right"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                                                    <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                                                </MultiTrigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="HeaderTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Path=name}" />
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="ContentTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <ListBox ItemsSource="{Binding Path=properties}" Style="{StaticResource ResourceKey=DetailsViewListBox}" />
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </TabControl.ItemContainerStyle>
+                                    </TabControl>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem x:Name="tiBSODs" Header="BSOD">
+                                <DockPanel Margin="8">
+                                    <Button x:Name="bnViewBSOD" DockPanel.Dock="Bottom" Content="Просмотр дампов памяти в BlueScreenView" Margin="8"
+                                            Click="bnViewBSOD_Click"  />
+                                    <ListBox x:Name="lbBSOD" ItemsSource="{Binding}" ScrollViewer.CanContentScroll="True" Background="{x:Null}" />
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem x:Name="tiRemoteCmd" Header="Командная строка">
+                                <DockPanel Margin="8">
+                                    <DockPanel DockPanel.Dock="Top">
+                                        <Button DockPanel.Dock="Right" x:Name="bnSendRemoteCmd" Content="Отправить" Margin="4" Width="96"
+                                                Click="bnSendRemoteCmd_Click" />
+                                        <TextBox x:Name="tbRemoteCmd" Margin="4" KeyDown="tbRemoteCmd_KeyDown" />
+                                    </DockPanel>
+                                    <TextBox x:Name="tbOutput" Margin="4" TextWrapping="WrapWithOverflow"
+                                             IsReadOnly="True" IsReadOnlyCaretVisible="False" />
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem x:Name="tiMisc" Header="Разное">
+                                <StackPanel Margin="8">
+                                    <Button x:Name="bnGPUpdate" Content="Форсированное обновление групповых политик" Margin="4" Height="30" Width="340" 
+                                            Click="bnGPUpdate_Click" />
+                                    <Button x:Name="bnRemotePrgLaunch" Content="Удаленный запуск программы" Margin="4" Height="30" Width="340"
+                                            Click="bnRemotePrgLaunch_Click" />
+                                    <Button x:Name="bnTimeSync" Content="Синхронизовать время" Margin="4" Height="30" Width="340"
+                                            Click="bnTimeSync_Click" />
+                                    <Button x:Name="bnSpoolerRestart" Content="Перезапуск службы печати" Margin="4" Height="30" Width="340"
+                                            Click="bnSpoolerRestart_Click" />
+                                    <Button x:Name="bnShutdownRemotePC" Content="Выключить ПК" Margin="4" Height="30" Width="340"
+                                            Click="bnShutdownRemotePC_Click" />
+                                </StackPanel>
+                            </TabItem>
+                            
+                        </TabControl>
+                    </DockPanel>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Группы" Visibility="Collapsed">
+                <DockPanel>
+                    <GroupBox DockPanel.Dock="Top" Header="Поиск">
+                        <DockPanel>
+                            <Button x:Name="bnSearchGroupByName" DockPanel.Dock="Right" Content="Поиск" Margin="4" TabIndex="1"
+                                    Click="bnSearchGroupByName_Click" Width="74" />
+                            <TextBox x:Name="tbSearchGroupByName" Margin="4" TabIndex="0"
+                                     KeyDown="tbSearchGroupByName_KeyDown" />
+                        </DockPanel>
+                    </GroupBox>
+                    <ListBox x:Name="lbGroups" ItemsSource="{Binding}" DisplayMemberPath="name" Margin="4"
+                             SelectionChanged="lbGroups_SelectionChanged" />
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Компьютеры" Visibility="Collapsed">
+                <DockPanel>
+                    <GroupBox DockPanel.Dock="Top" Header="Поиск">
+                        <DockPanel>
+                            <Button x:Name="bnSearchComputerByName" DockPanel.Dock="Right" Content="Поиск" Margin="4" TabIndex="1"
+                                    Click="bnSearchComputerByName_Click" Width="74" />
+                            <TextBox x:Name="tbSearchComputerByName" Margin="4" TabIndex="0"
+                                     KeyDown="tbSearchComputerByName_KeyDown" />
+                        </DockPanel>
+                    </GroupBox>
+                    <ListBox x:Name="lbComputers" ItemsSource="{Binding}" DisplayMemberPath="name" Margin="4"
+                         SelectionChanged="lbComputers_SelectionChanged" />
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+
+    </DockPanel>
+
+</Window>

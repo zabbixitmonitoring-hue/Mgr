@@ -1,0 +1,12 @@
+﻿<UserControl x:Class="ADMgr.Failed"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008">
+    <Border BorderThickness="0" Width="20" Height="20" Margin="4 0 0 0">
+        <Border.Background>
+            <ImageBrush ImageSource="/ADMgr;component/Image_utils/Virtual-MachineDisable-ICO.ico"/>
+        </Border.Background>
+        <Grid/>
+    </Border>
+</UserControl>

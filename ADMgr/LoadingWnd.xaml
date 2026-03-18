@@ -1,0 +1,24 @@
+﻿<Window x:Class="ADMgr.LoadingWnd"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Загрузка..." 
+        WindowStartupLocation="CenterScreen" 
+        Closing="Window_Closing" 
+                ResizeMode="NoResize"
+        ShowInTaskbar="True"        
+        Style="{StaticResource VS2012WindowStyle}"
+        FontFamily="/ADMgr;component/Image_utils/#tangak" FontSize="14" Icon="/Image_utils/987.ico"
+        Width="560" Height="180">
+    <Grid>
+    <StackPanel Width="420" Margin="4">
+        <DockPanel Margin="0,2">
+            <TextBlock x:Name="tbTotalProgress" DockPanel.Dock="Right" Text="0%" TextAlignment="Right" VerticalAlignment="Center" Width="36" />
+            <ProgressBar x:Name="pbTotalProgress" Value="0" Maximum="11" Margin="0,0,4,0"  />
+        </DockPanel>
+        <DockPanel Margin="0,2">
+            <TextBlock x:Name="tbCurrentProgress" DockPanel.Dock="Right" Text="0%" TextAlignment="Right" VerticalAlignment="Center" Width="36" />
+            <ProgressBar x:Name="pbCurrentProgress" Value="0" Margin="0,0,4,0"  />
+        </DockPanel>
+    </StackPanel>
+    </Grid>
+</Window>

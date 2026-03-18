@@ -1,0 +1,104 @@
+﻿<Window x:Class="ADMgr.Messagegood"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" 
+    Icon="/Image_utils/smilegood.png"
+        Topmost="True"
+    WindowStartupLocation="CenterScreen" 
+    Height="207.193" 
+    Width="412.321" 
+    Cursor="/ADMgr;component/Image_utils/Arrow.cur">
+    <Window.Resources>
+        <!-- Button -->
+        <Style x:Key="ButtonStyleMessage" TargetType="{x:Type Button}">
+            <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+            <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+            <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid x:Name="Root">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.4" />
+                                        <VisualTransition To="Pressed" />
+                                        <VisualTransition From="Pressed" />
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="MouseOver">
+                                        <Storyboard>
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Focused"/>
+                                    <VisualState x:Name="Unfocused" />
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="12" Opacity="0">
+                                <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                            </Border>
+                            <Border x:Name="NormalElement" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="12"
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                            <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" Background="{StaticResource ControlBackgroundOver}" CornerRadius="12" Opacity="0" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                            <Border x:Name="PressedElement" Background="{StaticResource ControlBackgroundPressed}" CornerRadius="12" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}"/>
+                            <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+    <Window.Style>
+        <StaticResource ResourceKey="MessageBoxgoodWindowStyle"/>
+    </Window.Style>
+    <StackPanel Margin="0,-40,0,1" Width="301" Height="100" VerticalAlignment="Bottom">
+        <TextBlock x:Name="TbMessage" 
+                   FontSize="20" 
+                   TextAlignment="Center" 
+                   Margin="9,4" 
+                   TextWrapping="WrapWithOverflow" 
+                   Height="60" FontFamily="/ADMgr;component/Image_utils/#Lobster 1.4" Foreground="{DynamicResource ControlForeground}">
+            <TextBlock.Effect>
+                <DropShadowEffect BlurRadius="1" Color="Black" ShadowDepth="1" />
+            </TextBlock.Effect>
+        </TextBlock>
+        <Button x:Name="BnOk" Content="OK" FontSize="16" IsDefault="True" Padding="0"
+                Click="bnOK_Click" Height="27" RenderTransformOrigin="0.5,0.5" Width="73" Margin="0,0,106,0" HorizontalAlignment="Right" FontFamily="/ADMgr;component/Image_utils/#Lobster 1.4" Cursor="/ADMgr;component/Image_utils/Arrow.cur" Style="{StaticResource ButtonStyleMessage}" >
+            <Button.RenderTransform>
+                <TransformGroup>
+                    <SkewTransform/>
+                    <RotateTransform/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </Button.RenderTransform>
+        </Button>
+    </StackPanel>
+</Window>

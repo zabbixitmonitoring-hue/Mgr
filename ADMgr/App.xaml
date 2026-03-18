@@ -1,0 +1,1294 @@
+﻿<Application
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ADMgr" 
+    xmlns:Options="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
+    x:Class="ADMgr.App"
+             Startup="Application_Startup">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary   Source="pack://application:,,,/ErmilovStyle;component/Themes/Core.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <SolidColorBrush x:Key="PrimaryMidBrush" Color="#FF13344B"  />
+            <SolidColorBrush x:Key="PrimaryLightBrush" Color="#FF1D4057"  />
+            <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#FF0D2738"  />
+
+            <LinearGradientBrush x:Key="3BrushTrackProgressBar2" EndPoint="0,0.5" StartPoint="1,0.5">
+                <GradientStop Color="#FFEFCF38" Offset="1"/>
+                <GradientStop Color="#FFFD9804"/>
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="ConverterText" Color="#FFFD9804" Opacity="2" />
+
+            <!-- Cursor resource removed to avoid missing external file during build -->
+
+            <Style x:Key="FocusLine">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle Margin="2" StrokeDashArray="1 2" Stroke="#ddd" SnapsToDevicePixels="True" StrokeThickness="1"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStylePrervat" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="8" />
+                                </Border>
+                                <Border x:Name="NormalElement" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" Background="{StaticResource ControlBackgroundOver}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                                <Border x:Name="PressedElement" Background="{StaticResource ControlBackgroundPressed}" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}"/>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ButtonStyleDopParametr" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="10,0,10,0" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="10,0,10,0" />
+                                </Border>
+                                <Border x:Name="NormalElement" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="10,0,10,0"
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" Background="{StaticResource ControlBackgroundOver}" CornerRadius="10,0,10,0" Opacity="0" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                                <Border x:Name="PressedElement" Background="{StaticResource ControlBackgroundPressed}" CornerRadius="10,0,10,0" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}"/>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="9.998,57.361,10,57.361" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Width="8.002"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SucceededStyleSucceeded" TargetType="{x:Type local:Succeeded}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type local:Succeeded}">
+                            <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True" Width="20">
+                                <ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="0" Height="20">
+                                    <ContentPresenter.OpacityMask>
+                                        <ImageBrush ImageSource="Image_utils/Virtual-Machine-ICO.ico" Stretch="Uniform"/>
+                                    </ContentPresenter.OpacityMask>
+                                </ContentPresenter>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="FailedStyleFailed" TargetType="{x:Type local:Failed}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type local:Failed}">
+                            <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                    <ContentPresenter.OpacityMask>
+                                        <ImageBrush ImageSource="Image_utils/Virtual-MachineDisable-ICO.ico" Stretch="Uniform"/>
+                                    </ContentPresenter.OpacityMask>
+                                </ContentPresenter>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Thickness x:Key="Thickness1">1,1,1,3</Thickness>
+            <Style x:Key="TabItemStyleDop" TargetType="{x:Type TabItem}">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="Background" Value="{StaticResource TabControlItemBackgroundNormal}"/>
+                <Setter Property="Foreground" Value="{StaticResource ControlForegroundWhite}"/>
+                <Setter Property="Padding" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1,1,1,0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                <Setter Property="MinWidth" Value="10" />
+                <Setter Property="MinHeight" Value="28" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TabItem}">
+                            <ControlTemplate.Resources>
+                                <Storyboard x:Key="HoverOn">
+                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                        To="{StaticResource ColorForeground}"/>
+                                </Storyboard>
+                                <Storyboard x:Key="HoverOff">
+                                    <ColorAnimation Duration="0:0:0.3" Storyboard.TargetName="Content" Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                        To="{StaticResource ColorForegroundWhite}"/>
+                                </Storyboard>
+                            </ControlTemplate.Resources>
+                            <Grid SnapsToDevicePixels="True" x:Name="grid" Background="Transparent" Margin="6,0,2,1">
+                                <Border x:Name="border_inner" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}" 
+                                    Background="{TemplateBinding Background}" CornerRadius="10,0,10,0" Margin="0,0,0,1">
+                                    <ContentPresenter x:Name="Content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                        HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                        VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" 
+                                        ContentSource="Header" RecognizesAccessKey="True" Margin="8,0">
+                                        <ContentPresenter.Effect>
+                                            <DropShadowEffect BlurRadius="0" ShadowDepth="0" Direction="0" RenderingBias="Quality"/>
+                                        </ContentPresenter.Effect>
+                                    </ContentPresenter>
+                                </Border>
+                                <Border x:Name="border_hover" Background="{StaticResource ControlBackgroundLine}" Opacity="0" CornerRadius="10,0,10,0" BorderBrush="{DynamicResource 2BrushTrackProgressBar}" Margin="0,0,0,1"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                    </MultiTrigger.Conditions>
+                                    <MultiTrigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                    </MultiTrigger.EnterActions>
+                                    <MultiTrigger.ExitActions>
+                                        <BeginStoryboard Storyboard="{StaticResource HoverOff}"/>
+                                    </MultiTrigger.ExitActions>
+                                </MultiTrigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource HoverOn}"/>
+                                    </Trigger.EnterActions>
+                                    <Setter Property="Panel.ZIndex" Value="1"/>
+                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource PressedBackgroundTabItem}"/>
+                                    <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Background" TargetName="border_inner" Value="{StaticResource DisabledBrush}"/>
+                                    <Setter Property="BorderBrush" TargetName="border_inner" Value="{StaticResource DisabledBorderBrush}"/>
+                                    <Setter Property="Foreground">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="{StaticResource DisabledForeground}"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="TabStripPlacement" Value="Left">
+                                    <Setter Property="LayoutTransform">
+                                        <Setter.Value>
+                                            <RotateTransform Angle="-90"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Margin" Value="2,0,-2,0"/>
+                                </Trigger>
+                                <Trigger Property="TabStripPlacement" Value="Right">
+                                    <Setter Property="LayoutTransform">
+                                        <Setter.Value>
+                                            <RotateTransform Angle="90"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="TabStripPlacement" Value="Bottom">
+                                    <Setter Property="BorderThickness" TargetName="border_inner" Value="1,0,1,1"/>
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True"/>
+                                        <Condition Property="TabStripPlacement" Value="Top"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="Margin" Value="-2,0,-2,1"/>
+                                    <Setter Property="Margin" TargetName="Content" Value="8,-4,8,-2"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True"/>
+                                        <Condition Property="TabStripPlacement" Value="Bottom"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="Margin" Value="-2,-1,-2,-2"/>
+                                    <Setter Property="Margin" TargetName="Content" Value="0,1,0,0"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True"/>
+                                        <Condition Property="TabStripPlacement" Value="Left"/>
+                                    </MultiTrigger.Conditions>
+
+                                    <Setter Property="Margin" Value="-2,-2,-1,-2"/>
+                                    <Setter Property="Margin" TargetName="Content" Value="0,0,1,0"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True"/>
+                                        <Condition Property="TabStripPlacement" Value="Right"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="Margin" Value="-1,-2,-2,-2"/>
+                                    <Setter Property="Margin" TargetName="Content" Value="1,0,0,0"/>
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <LinearGradientBrush x:Key="LineBackground" EndPoint="0,0.5" StartPoint="1,0.5" Opacity="0.495">
+                <GradientStop Color="#FF00FF0C" Offset="0"/>
+                <GradientStop Color="#FF16C38F" Offset="1"/>
+                <GradientStop Color="#FF08E2A1" Offset="0.25"/>
+                <GradientStop Color="#FF09F7B0" Offset="0.55"/>
+                <GradientStop Color="#FF19DAA0" Offset="0.8"/>
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="Red" Color="Red"/>
+
+            <LinearGradientBrush x:Key="TextBlockMain" EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
+                <GradientStop Color="#FF00EBFF" Offset="1"/>
+                <GradientStop Color="#FF29C9D6"/>
+            </LinearGradientBrush>
+            <Style x:Key="ButtonStyleLan" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1577.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1577.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1577.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleIe" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/870.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/870.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/870.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleRdp" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/rdp.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/rdp.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/rdp.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleCompmgmt" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2493.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2493.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2493.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleSystema" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1017.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1017.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1017.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleCMD" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2085.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2085.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2085.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStylePs" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2477.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2477.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/2477.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleTask" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1349.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1349.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1349.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleControl" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/183.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/183.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/183.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleWinR" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/975.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/975.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/975.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleRegedit" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/3115.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/3115.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/3115.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStyleControPO" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/835.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/835.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/835.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ButtonStylepagefile" TargetType="{x:Type Button}">
+                <Setter Property="TextOptions.TextHintingMode" Value="Animated" />
+                <Setter Property="Foreground" Value="{StaticResource ControlForeground}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundNormal}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusLine}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid x:Name="Root">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.4" />
+                                            <VisualTransition To="Pressed" />
+                                            <VisualTransition From="Pressed" />
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="PressedElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="MouseOverElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="#32ebfb"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="NormalElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="0" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="DisabledElement" Storyboard.TargetProperty="(UIElement.Opacity)" To="1" />
+                                                <DoubleAnimation Duration="0" Storyboard.TargetName="ContentHost" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75" />
+                                                <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" Storyboard.TargetName="ContentHost" To="{StaticResource DisabledForeground}"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="FocusStates">
+                                        <VisualState x:Name="Focused"/>
+                                        <VisualState x:Name="Unfocused" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="DisabledElement" Background="{StaticResource DisabledBrush}" CornerRadius="8" Opacity="0">
+                                    <Border BorderBrush="{StaticResource DisabledBorderBrush}" BorderThickness="0,0,1,1" CornerRadius="12" />
+                                </Border>
+                                <Border x:Name="NormalElement" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="8"
+                                    BorderThickness="1" Margin="0">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1065.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="MouseOverElement" BorderBrush="{StaticResource ControlActiveBorderBrush}" CornerRadius="8" Opacity="0" 
+                                    BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1065.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border x:Name="PressedElement" CornerRadius="8" Opacity="0" BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{StaticResource ControlActiveBorderBrush}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="Image_utils/1065.png" Stretch="Uniform"/>
+                                    </Border.Background>
+                                </Border>
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{DynamicResource Thickness1}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

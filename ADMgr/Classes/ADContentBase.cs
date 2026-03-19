@@ -57,7 +57,7 @@ namespace ADMgr.Classes
             try
             {
                 cachedAttributes = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                string[] attrs = new string[] { "telephoneNumber", "sAMAccountName", "description", "displayName", "cn", "department", "userPrincipalName" };
+                string[] attrs = new string[] { "telephoneNumber", "sAMAccountName", "description", "displayName", "cn", "department", "userPrincipalName", "distinguishedName" };
                 foreach (string a in attrs)
                 {
                     try

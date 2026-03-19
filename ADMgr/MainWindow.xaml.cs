@@ -150,12 +150,11 @@ namespace ADMgr
 
         private delegate void PCMgmtDelegate(String _pcName);
 
-        // incremental tree population to avoid UI freeze
-        private DispatcherTimer populateTimer = null;
-        private int populateIndex = 0;
-        private List<ADContentBase> populateSource = null;
-        private const int PopulateBatchSize = 10;
-        private const int PopulateIntervalMs = 100;
+        // async tree preparation to keep UI responsive during large AD loads
+        private int populateGeneration = 0;
+        private DispatcherTimer adInitWatchdog = null;
+        private volatile bool adInitCompleted = false;
+        private const int AdInitWatchdogSeconds = 30;
 
         public MainWindow()
         {
@@ -193,6 +192,7 @@ namespace ADMgr
         {
             // show UI immediately; start AD connection in background and show FindLoading
             Title = "Подключение...";
+            adInitCompleted = false;
 
             // bind to placeholders so UI doesn't access App lists while they are populated in background
             tvUsers.ItemsSource = new System.Collections.Generic.List<ADContentBase>();
@@ -205,6 +205,7 @@ namespace ADMgr
 
             // show loading indicator near search
             try { FindLoading.Visibility = Visibility.Visible; } catch { }
+            StartAdInitWatchdog();
 
             Logger.Log("Window_Loaded: starting InitializeADConnection thread");
             // run AD initialization on a dedicated STA thread to avoid COM marshalling issues
@@ -212,12 +213,22 @@ namespace ADMgr
             {
                 var swInit = System.Diagnostics.Stopwatch.StartNew();
                 Logger.Log("InitializeADConnection thread: start");
-                bool ok = App.InitializeADConnection();
+                bool ok = false;
+                try
+                {
+                    ok = App.InitializeADConnection();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogException(ex, "InitializeADConnection thread");
+                }
                 swInit.Stop();
                 Logger.Log($"InitializeADConnection thread: finished, duration={swInit.Elapsed.TotalSeconds:0.000}s");
 
                 Dispatcher.BeginInvoke((Action)(() =>
                 {
+                    adInitCompleted = true;
+                    StopAdInitWatchdog();
                     Logger.Log("Dispatcher: processing InitializeADConnection completion");
                     if (ok)
                     {
@@ -282,6 +293,63 @@ namespace ADMgr
 
         }
 
+        private void StartAdInitWatchdog()
+        {
+            try
+            {
+                StopAdInitWatchdog();
+                adInitWatchdog = new DispatcherTimer { Interval = TimeSpan.FromSeconds(AdInitWatchdogSeconds) };
+                adInitWatchdog.Tick += AdInitWatchdog_Tick;
+                adInitWatchdog.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "StartAdInitWatchdog");
+            }
+        }
+
+        private void StopAdInitWatchdog()
+        {
+            try
+            {
+                if (adInitWatchdog != null)
+                {
+                    adInitWatchdog.Stop();
+                    adInitWatchdog.Tick -= AdInitWatchdog_Tick;
+                    adInitWatchdog = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "StopAdInitWatchdog");
+            }
+        }
+
+        private void AdInitWatchdog_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (adInitCompleted)
+                {
+                    StopAdInitWatchdog();
+                    return;
+                }
+
+                StopAdInitWatchdog();
+                Logger.Log($"AdInitWatchdog: timeout after {AdInitWatchdogSeconds} seconds");
+
+                // Do not keep the UI locked in loading state forever if AD is slow/unreachable.
+                try { Title = "Подключение к AD занимает больше обычного"; } catch { }
+                try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
+                try { tbSearchAll.IsEnabled = true; } catch { }
+                try { bnSearchAll.IsEnabled = true; } catch { }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "AdInitWatchdog_Tick");
+            }
+        }
+
         // assign populated App.* lists to UI controls on UI thread (runs at Background priority)
         private void AssignDataToUI(bool ok)
         {
@@ -295,13 +363,7 @@ namespace ADMgr
                 Logger.Log("AssignDataToUI: building TreeNodeViewModel roots");
                 try
                 {
-                    var roots = new System.Collections.ObjectModel.ObservableCollection<TreeNodeViewModel>();
-                    if (App.activeDirectoryContent != null)
-                    {
-                        foreach (var item in App.activeDirectoryContent)
-                            roots.Add(new TreeNodeViewModel(item));
-                    }
-                    tvUsers.ItemsSource = roots;
+                    StartPopulateTreeInBatches(App.activeDirectoryContent);
                 }
                 catch (Exception ex) { Logger.LogException(ex, "AssignDataToUI BuildRoots"); }
 
@@ -313,10 +375,7 @@ namespace ADMgr
 
                 Logger.Log("AssignDataToUI: finished");
 
-                // hide loading and enable search now that roots are assigned
-                try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
-                try { tbSearchAll.IsEnabled = true; } catch { }
-                try { bnSearchAll.IsEnabled = true; } catch { }
+                // loading indicator/search state will be updated in StartPopulateTreeInBatches
             }
             catch (Exception ex)
             {
@@ -328,67 +387,70 @@ namespace ADMgr
         {
             try
             {
-                if (populateTimer != null)
+                int generation = ++populateGeneration;
+                var source = items ?? new List<ADContentBase>();
+                Logger.Log($"StartPopulateTreeInBatches: total={source.Count}");
+
+                if (source.Count == 0)
                 {
-                    populateTimer.Stop();
-                    populateTimer = null;
+                    tvUsers.ItemsSource = new List<TreeNodeViewModel>();
+                    try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
+                    try { tbSearchAll.IsEnabled = true; } catch { }
+                    try { bnSearchAll.IsEnabled = true; } catch { }
+                    Logger.Log("StartPopulateTreeInBatches: source empty, hid FindLoading and enabled search controls");
+                    return;
                 }
 
-                populateSource = items ?? new List<ADContentBase>();
-                populateIndex = 0;
-                tvUsers.Items.Clear();
-
-                Logger.Log($"StartPopulateTreeInBatches: total={populateSource.Count}");
-
-                populateTimer = new DispatcherTimer();
-                populateTimer.Interval = TimeSpan.FromMilliseconds(PopulateIntervalMs);
-                populateTimer.Tick += (s, e) =>
+                Thread treeBuildThread = new Thread(() =>
                 {
-                    // Stop timer while processing to avoid reentrancy
-                    try { populateTimer.Stop(); } catch { }
-
-                    // Schedule actual add at Background priority so rendering/animations have precedence
-                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                    var preparedRoots = new List<TreeNodeViewModel>(source.Count);
+                    try
                     {
-                        int added = 0;
-                        while (populateIndex < populateSource.Count && added < PopulateBatchSize)
+                        foreach (var item in source)
                         {
                             try
                             {
-                                tvUsers.Items.Add(populateSource[populateIndex]);
+                                preparedRoots.Add(new TreeNodeViewModel(item));
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogException(ex, "Populate add item");
+                                Logger.LogException(ex, "Tree build create vm");
                             }
-                            populateIndex++;
-                            added++;
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogException(ex, "Tree build thread");
+                    }
 
-                        Logger.Log($"PopulateTick: added={added}, index={populateIndex}/{populateSource.Count}");
-
-                        if (populateIndex >= populateSource.Count)
+                    Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        try
                         {
-                            try { populateTimer.Stop(); } catch { }
-                            populateTimer = null;
-                            populateSource = null;
-                            Logger.Log("StartPopulateTreeInBatches: finished populating tvUsers");
+                            if (generation != populateGeneration)
+                            {
+                                Logger.Log("Tree build completion ignored due to newer generation");
+                                return;
+                            }
 
-                            // now that tree is fully populated, hide loading indicator and enable search controls
-                            try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
-                            try { tbSearchAll.IsEnabled = true; } catch { }
-                            try { bnSearchAll.IsEnabled = true; } catch { }
-                            Logger.Log("StartPopulateTreeInBatches: hid FindLoading and enabled search controls");
+                            tvUsers.ItemsSource = preparedRoots;
+                            Logger.Log($"StartPopulateTreeInBatches: assigned roots={preparedRoots.Count}");
+
+                            try
+                            {
+                                FindLoading.Visibility = Visibility.Collapsed;
+                                tbSearchAll.IsEnabled = true;
+                                bnSearchAll.IsEnabled = true;
+                            }
+                            catch { }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            // resume timer for next batch
-                            try { populateTimer.Start(); } catch { }
+                            Logger.LogException(ex, "Tree build completion UI assign");
                         }
                     }));
-                };
-
-                populateTimer.Start();
+                }) { IsBackground = true };
+                treeBuildThread.Start();
             }
             catch (Exception ex)
             {
@@ -858,14 +920,14 @@ namespace ADMgr
                             {
                                 try
                                 {
-                                    DirectoryEntry de = null;
-                                    try { de = sr.GetDirectoryEntry(); } catch { }
-
                                     string cn = null;
                                     try { if (sr.Properties.Contains("cn") && sr.Properties["cn"].Count > 0) cn = sr.Properties["cn"][0].ToString(); }
                                     catch { }
+                                    string dn = null;
+                                    try { if (sr.Properties.Contains("distinguishedName") && sr.Properties["distinguishedName"].Count > 0) dn = sr.Properties["distinguishedName"][0].ToString(); }
+                                    catch { }
 
-                                    var info = new SearchResultInfo() { DisplayName = cn ?? (de != null ? de.Name : null), EntryPath = de != null ? de.Path : null };
+                                    var info = new SearchResultInfo() { DisplayName = cn ?? "(без имени)", EntryPath = dn };
 
                                     // read extra attributes if present
                                     try { if (sr.Properties.Contains("department") && sr.Properties["department"].Count > 0) info.Department = sr.Properties["department"][0].ToString(); } catch { }
@@ -921,11 +983,74 @@ namespace ADMgr
 
                     // show results in separate XAML window
                     var dlg = new SearchResultsWindow(results) { Owner = this };
-                    dlg.ShowDialog();
+                    bool? selected = dlg.ShowDialog();
+                    if (selected == true)
+                        NavigateToSearchResult(dlg.SelectedResult);
                 }));
             }) { IsBackground = true };
             try { searchThread.SetApartmentState(ApartmentState.STA); } catch { }
             searchThread.Start();
+        }
+
+        private void NavigateToSearchResult(SearchResultInfo selectedResult)
+        {
+            if (selectedResult == null)
+                return;
+
+            // show loader while resolving path and selecting item in tree
+            try { FindLoading.Visibility = Visibility.Visible; } catch { }
+            try { tbSearchAll.IsEnabled = false; } catch { }
+            try { bnSearchAll.IsEnabled = false; } catch { }
+
+            Thread resolveThread = new Thread(() =>
+            {
+                List<ADContentBase> resultPath = null;
+                try
+                {
+                    if (selectedResult.PathInTree != null && selectedResult.PathInTree.Count > 0)
+                    {
+                        resultPath = new List<ADContentBase>(selectedResult.PathInTree);
+                    }
+                    else if (!String.IsNullOrEmpty(selectedResult.EntryPath))
+                    {
+                        string targetDn = selectedResult.EntryPath;
+                        if (targetDn.StartsWith("LDAP://", StringComparison.OrdinalIgnoreCase))
+                            targetDn = targetDn.Substring("LDAP://".Length);
+
+                        foreach (var item in App.activeDirectoryContent)
+                        {
+                            List<ADContentBase> path = new List<ADContentBase>();
+                            if (TryFindPathByDistinguishedName(item, targetDn, path, out resultPath))
+                                break;
+                        }
+                    }
+                }
+                catch { resultPath = null; }
+
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    try
+                    {
+                        if (resultPath != null && resultPath.Count > 0)
+                        {
+                            SelectPathInTreeView(resultPath);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Объект найден в AD, но не загружен в дереве. Попробуйте обновить содержимое.", "Поиск", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    finally
+                    {
+                        // hide loader after selection/navigation is complete
+                        try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
+                        try { tbSearchAll.IsEnabled = true; } catch { }
+                        try { bnSearchAll.IsEnabled = true; } catch { }
+                    }
+                }));
+            }) { IsBackground = true };
+            try { resolveThread.SetApartmentState(ApartmentState.STA); } catch { }
+            resolveThread.Start();
         }
         private bool FindPath(ADContentBase current, string q, List<ADContentBase> path, out List<ADContentBase> resultPath)
         {
@@ -1011,7 +1136,7 @@ namespace ADMgr
                                         var info = new SearchResultInfo()
                                         {
                                             DisplayName = current.cachedAttributes.ContainsKey("cn") ? current.cachedAttributes["cn"] : current.name,
-                                            EntryPath = current.LDAP,
+                                            EntryPath = current.cachedAttributes.ContainsKey("distinguishedName") ? current.cachedAttributes["distinguishedName"] : current.LDAP,
                                             PathInTree = new List<ADContentBase>(path),
                                             Department = current.cachedAttributes.ContainsKey("department") ? current.cachedAttributes["department"] : null,
                                             TelephoneNumber = current.cachedAttributes.ContainsKey("telephoneNumber") ? current.cachedAttributes["telephoneNumber"] : null,
@@ -1200,6 +1325,46 @@ namespace ADMgr
                     }
                 }
                 catch { }
+            }
+
+            path.RemoveAt(path.Count - 1);
+            return false;
+        }
+
+        // Thread-safe path resolve by distinguishedName using cached attributes
+        private bool TryFindPathByDistinguishedName(ADContentBase current, string targetDn, List<ADContentBase> path, out List<ADContentBase> resultPath)
+        {
+            resultPath = null;
+            if (current == null || String.IsNullOrEmpty(targetDn))
+                return false;
+
+            path.Add(current);
+            try
+            {
+                string currentDn = null;
+                try
+                {
+                    if (current.cachedAttributes != null)
+                        current.cachedAttributes.TryGetValue("distinguishedName", out currentDn);
+                }
+                catch { }
+
+                if (!String.IsNullOrEmpty(currentDn) && String.Equals(currentDn, targetDn, StringComparison.OrdinalIgnoreCase))
+                {
+                    resultPath = new List<ADContentBase>(path);
+                    return true;
+                }
+            }
+            catch { }
+
+            ADOrganizationalUnit ou = current as ADOrganizationalUnit;
+            if (ou != null && ou.content != null)
+            {
+                foreach (ADContentBase child in ou.content)
+                {
+                    if (TryFindPathByDistinguishedName(child, targetDn, path, out resultPath))
+                        return true;
+                }
             }
 
             path.RemoveAt(path.Count - 1);

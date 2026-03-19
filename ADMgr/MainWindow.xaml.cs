@@ -983,11 +983,70 @@ namespace ADMgr
 
                     // show results in separate XAML window
                     var dlg = new SearchResultsWindow(results) { Owner = this };
-                    dlg.ShowDialog();
+                    bool? selected = dlg.ShowDialog();
+                    if (selected == true)
+                        NavigateToSearchResult(dlg.SelectedResult);
                 }));
             }) { IsBackground = true };
             try { searchThread.SetApartmentState(ApartmentState.STA); } catch { }
             searchThread.Start();
+        }
+
+        private void NavigateToSearchResult(SearchResultInfo selectedResult)
+        {
+            if (selectedResult == null)
+                return;
+
+            // show loader while resolving path and selecting item in tree
+            try { FindLoading.Visibility = Visibility.Visible; } catch { }
+            try { tbSearchAll.IsEnabled = false; } catch { }
+            try { bnSearchAll.IsEnabled = false; } catch { }
+
+            Thread resolveThread = new Thread(() =>
+            {
+                List<ADContentBase> resultPath = null;
+                try
+                {
+                    if (selectedResult.PathInTree != null && selectedResult.PathInTree.Count > 0)
+                    {
+                        resultPath = new List<ADContentBase>(selectedResult.PathInTree);
+                    }
+                    else if (!String.IsNullOrEmpty(selectedResult.EntryPath))
+                    {
+                        foreach (var item in App.activeDirectoryContent)
+                        {
+                            List<ADContentBase> path = new List<ADContentBase>();
+                            if (TryFindPathToEntry(item, selectedResult.EntryPath, path, out resultPath))
+                                break;
+                        }
+                    }
+                }
+                catch { resultPath = null; }
+
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    try
+                    {
+                        if (resultPath != null && resultPath.Count > 0)
+                        {
+                            SelectPathInTreeView(resultPath);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Объект найден в AD, но не загружен в дереве. Попробуйте обновить содержимое.", "Поиск", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    finally
+                    {
+                        // hide loader after selection/navigation is complete
+                        try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
+                        try { tbSearchAll.IsEnabled = true; } catch { }
+                        try { bnSearchAll.IsEnabled = true; } catch { }
+                    }
+                }));
+            }) { IsBackground = true };
+            try { resolveThread.SetApartmentState(ApartmentState.STA); } catch { }
+            resolveThread.Start();
         }
         private bool FindPath(ADContentBase current, string q, List<ADContentBase> path, out List<ADContentBase> resultPath)
         {

@@ -10,6 +10,8 @@ namespace ADMgr
 {
     public partial class SearchResultsWindow : Window
     {
+        public SearchResultInfo SelectedResult { get; private set; }
+
         public SearchResultsWindow(List<SearchResultInfo> results)
         {
             InitializeComponent();
@@ -32,45 +34,12 @@ namespace ADMgr
             }
 
             var sel = lbResults.SelectedItem as SearchResultInfo;
-            if (sel != null)
-            {
-                if (!String.IsNullOrEmpty(sel.EntryPath))
-                {
-                    var main = Application.Current.MainWindow as MainWindow;
-                    if (main != null)
-                    {
-                        List<Classes.ADContentBase> resultPath = null;
-                        try
-                        {
-                            foreach (var item in App.activeDirectoryContent)
-                            {
-                                List<Classes.ADContentBase> path = new List<Classes.ADContentBase>();
-                                if (main.TryFindPathToEntry(item, sel.EntryPath, path, out resultPath))
-                                    break;
-                            }
-                        }
-                        catch { resultPath = null; }
+            if (sel == null)
+                return;
 
-                        if (resultPath != null && resultPath.Count > 0)
-                        {
-                            main.SelectPathInTreeView(resultPath);
-                            this.DialogResult = true;
-                            this.Close();
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Объект найден в AD, но не загружен в дереве. Попробуйте обновить содержимое.", "Поиск", MessageBoxButton.OK, MessageBoxImage.Information);
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Объект найден в AD, но отсутствует путь.", "Поиск", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-            }
+            SelectedResult = sel;
+            this.DialogResult = true;
+            this.Close();
         }
     }
 

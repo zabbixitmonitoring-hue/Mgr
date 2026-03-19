@@ -150,16 +150,8 @@ namespace ADMgr
 
         private delegate void PCMgmtDelegate(String _pcName);
 
-        // incremental tree population to avoid UI freeze
-        private DispatcherTimer populateTimer = null;
-        private Queue<TreeNodeViewModel> populateQueue = null;
-        private System.Collections.ObjectModel.ObservableCollection<TreeNodeViewModel> populateRoots = null;
-        private readonly object populateSync = new object();
-        private volatile bool populateProducerCompleted = false;
-        private int populateProducedCount = 0;
-        private int populateConsumedCount = 0;
-        private const int PopulateBatchSize = 10;
-        private const int PopulateIntervalMs = 16;
+        // async tree preparation to keep UI responsive during large AD loads
+        private int populateGeneration = 0;
         private DispatcherTimer adInitWatchdog = null;
         private volatile bool adInitCompleted = false;
         private const int AdInitWatchdogSeconds = 30;
@@ -395,24 +387,13 @@ namespace ADMgr
         {
             try
             {
-                if (populateTimer != null)
-                {
-                    populateTimer.Stop();
-                    populateTimer = null;
-                }
-
+                int generation = ++populateGeneration;
                 var source = items ?? new List<ADContentBase>();
-                populateRoots = new System.Collections.ObjectModel.ObservableCollection<TreeNodeViewModel>();
-                tvUsers.ItemsSource = populateRoots;
-                populateQueue = new Queue<TreeNodeViewModel>();
-                populateProducerCompleted = false;
-                populateProducedCount = 0;
-                populateConsumedCount = 0;
-
                 Logger.Log($"StartPopulateTreeInBatches: total={source.Count}");
 
                 if (source.Count == 0)
                 {
+                    tvUsers.ItemsSource = new List<TreeNodeViewModel>();
                     try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
                     try { tbSearchAll.IsEnabled = true; } catch { }
                     try { bnSearchAll.IsEnabled = true; } catch { }
@@ -420,100 +401,56 @@ namespace ADMgr
                     return;
                 }
 
-                // Produce TreeNodeViewModel instances on a background thread
-                // so loader animation can continue on UI thread.
-                Thread producer = new Thread(() =>
+                Thread treeBuildThread = new Thread(() =>
                 {
+                    var preparedRoots = new List<TreeNodeViewModel>(source.Count);
                     try
                     {
                         foreach (var item in source)
                         {
-                            TreeNodeViewModel vm = null;
                             try
                             {
-                                vm = new TreeNodeViewModel(item);
+                                preparedRoots.Add(new TreeNodeViewModel(item));
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogException(ex, "Populate producer create vm");
-                            }
-
-                            if (vm != null)
-                            {
-                                lock (populateSync)
-                                {
-                                    populateQueue.Enqueue(vm);
-                                    populateProducedCount++;
-                                }
+                                Logger.LogException(ex, "Tree build create vm");
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogException(ex, "Populate producer");
+                        Logger.LogException(ex, "Tree build thread");
                     }
-                    finally
-                    {
-                        populateProducerCompleted = true;
-                    }
-                }) { IsBackground = true };
-                producer.Start();
 
-                populateTimer = new DispatcherTimer();
-                populateTimer.Interval = TimeSpan.FromMilliseconds(PopulateIntervalMs);
-                populateTimer.Tick += (s, e) =>
-                {
-                    try
+                    Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        int added = 0;
-                        while (added < PopulateBatchSize)
+                        try
                         {
-                            TreeNodeViewModel vm = null;
-                            lock (populateSync)
+                            if (generation != populateGeneration)
                             {
-                                if (populateQueue.Count > 0)
-                                    vm = populateQueue.Dequeue();
+                                Logger.Log("Tree build completion ignored due to newer generation");
+                                return;
                             }
 
-                            if (vm == null)
-                                break;
+                            tvUsers.ItemsSource = preparedRoots;
+                            Logger.Log($"StartPopulateTreeInBatches: assigned roots={preparedRoots.Count}");
 
                             try
                             {
-                                populateRoots.Add(vm);
-                                populateConsumedCount++;
-                                added++;
+                                FindLoading.Visibility = Visibility.Collapsed;
+                                tbSearchAll.IsEnabled = true;
+                                bnSearchAll.IsEnabled = true;
                             }
-                            catch (Exception ex) { Logger.LogException(ex, "Populate add item"); }
+                            catch { }
                         }
-
-                        bool queueEmpty;
-                        lock (populateSync) { queueEmpty = (populateQueue.Count == 0); }
-                        bool done = populateProducerCompleted && queueEmpty;
-                        Logger.Log($"PopulateTick: added={added}, consumed={populateConsumedCount}, produced={populateProducedCount}, done={done}");
-
-                        if (done)
+                        catch (Exception ex)
                         {
-                            try { populateTimer.Stop(); } catch { }
-                            populateTimer = null;
-                            populateQueue = null;
-                            populateRoots = null;
-                            Logger.Log("StartPopulateTreeInBatches: finished populating tvUsers");
-
-                            // now that tree is fully populated, hide loading indicator and enable search controls
-                            try { FindLoading.Visibility = Visibility.Collapsed; } catch { }
-                            try { tbSearchAll.IsEnabled = true; } catch { }
-                            try { bnSearchAll.IsEnabled = true; } catch { }
-                            Logger.Log("StartPopulateTreeInBatches: hid FindLoading and enabled search controls");
+                            Logger.LogException(ex, "Tree build completion UI assign");
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogException(ex, "Populate timer tick");
-                    }
-                };
-
-                populateTimer.Start();
+                    }));
+                }) { IsBackground = true };
+                treeBuildThread.Start();
             }
             catch (Exception ex)
             {
